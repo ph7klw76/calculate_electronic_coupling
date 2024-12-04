@@ -168,7 +168,7 @@ Cl 0: Specifies the element and its associated basis set.
 The file (MO1.com) perform a single-point energy calculation, where the program computes the electronic energy and molecular orbitals for the given geometry (one molecule) without optimizing the structure.
 Specific Outputs:
 Energy of the molecule.
-Molecular orbital coefficients (punched into a file).
+Molecular orbital coefficients (punched into a file, it create xxx.pun file).
 Electron density and wavefunction information. 
 
 The same can be done from MO2.com. Let say it looks like
@@ -674,34 +674,40 @@ Extracts:
 For each pair of molecular orbitals $(\text{orbA}, \text{orbB})$:
 
 1. **Self-overlap**:
-   $$
+   
+$$
    S(X, X) = \sum_{i, j} C_X[i] \cdot O[i, j] \cdot C_X[j]
-   $$
+$$
 
-2. **Self-energy**:
-   $$
+3. **Self-energy**:
+   
+$$
    E(X, X) = \sum_{i, j} C_X[i] \cdot F[i, j] \cdot C_X[j]
-   $$
+$$
    - Converted from Hartree to eV using:
-     $$
+     
+$$
      1 \, \text{Hartree} = 27.2114 \, \text{eV}
-     $$
+$$
 
-3. **Cross-term**:
+4. **Cross-term**:
    - **Overlap**:
-     $$
+     
+$$
      S(A, B) = \sum_{i, j} C_A[i] \cdot O[p, q] \cdot C_B[j]
-     $$
+$$
    - **Interaction**:
-     $$
+     
+$$
      E(A, B) = \sum_{i, j} C_A[i] \cdot F[p, q] \cdot C_B[j]
-     $$
+$$
    - Index $p, q$ accounts for offsets due to the basis functions of A.
 
 4. **Electronic Coupling**:
-   $$
+   
+$$
    t_{AB} = \frac{E(A, B) - \frac{1}{2} \big(E(A, A) + E(B, B)\big) S(A, B)}{1 - S(A, B)^2}
-   $$
+$$
 
 ---
 
@@ -714,7 +720,7 @@ Outputs:
 
 # Key Equations
 
-### **1. Self-energy ($E(X, X)$)**:
+### **1. Self-energy **($E(X, X)$):
 $$
 E(X, X) = \sum_{i, j} C_X[i] \cdot F[i, j] \cdot C_X[j]
 $$
