@@ -297,10 +297,440 @@ $NBO SAO=w53 FAO=W54 $END
   - `w53`: Contains SAO-related data.
   - `w54`: Contains FAO-related data.
 
+```python
+"""
+    * InFile: Contains the names of the files containing the Fock and
+                overlap matrices, and molecular orbital coefficients of
+                fragment A and B.
 
+          Example:
+            fock       filename
+            overlap    filename
+            molOrbA    filename
+            molOrbB    filename
+    * paramFile: Contains the parameters for the calculation including
+                      the number of basis functions on fragment A and B, and
+                      the sets of orbitals {m,n} on fragment A and {p,q} on
+                      fragment B where {m,n} and {p,q} are contiguous sets of
+                      numbers m thru n and p thru q, respectively.
+            
+          Example:
+            nBasisFunctsA    number
+            nBasisFunctsB    number
+            orbitalsA        number number
+            orbitalsB        number number
+
+    * outFilePrefix: Output files Prefix that are used to produced two output files: 
+                     filename.out contains all information including the overlap, interaction energy,
+                    and electronic coupling. filename.t contains only the electronic coupling.
+"""
+
+
+# after completion of calculation, you require to create logfile.txt before it can be run#
+import os
+import numpy as np
+
+def findnBasisFuncts(filename):
+    filename=os.getcwd()+'\\'+filename
+    read_file=open(filename)
+    for line in (read_file.readlines()):
+        if line.__contains__('NBasis='):
+            NBasis=line.split()[1]
+            NBasis=int(NBasis.strip())
+    return NBasis
+                            
+def coupling(argv):  # Take a list of arguement such as coupling(['a',2,3.5,'d']
+    inFile = argv[1]
+    paramFile = argv[2]
+    outFilePrefix = argv[3]
+    
+    # open input file,parameter files
+    inFile=os.getcwd()+'\\'+inFile    ## for linux it is '/'
+    paramFile=os.getcwd()+'\\'+paramFile ## for linux it is '/'
+    outFile=os.getcwd()+'\\'+outFilePrefix + '.out'  
+    outFile2=os.getcwd()+'\\'+outFilePrefix + '.t'
+
+    fIn = open(inFile,'r')
+    fPar = open(paramFile,'r')
+    # read input file for different filenames required
+    for i, line in enumerate(fIn):
+        print(i, line)
+        if (i==1):
+            fockFile = line.strip()
+        if (i==0):
+            overlapFile = line.strip()
+        if (i==2):
+            molOrbFileA = line.strip()
+        if (i==3):
+            molOrbFileB = line.strip()
+    fIn.close()
+    # open different filenames required
+    fockFile=os.getcwd()+'\\'+fockFile ## for linux it is '/'
+    fFock = open(fockFile,'r')
+    overlapFile=os.getcwd()+'\\'+overlapFile
+    fOverlap = open(overlapFile,'r')
+    molOrbFileA=os.getcwd()+'\\'+molOrbFileA
+    fOrb = open(molOrbFileA,'r')
+    # read parameter file
+    for i, line in enumerate(fPar):
+        if (i==0):
+            NumeroOrbital1=line.strip('NumeroOrbital1=')
+            NumeroOrbital1=NumeroOrbital1.split()   # assume two numbers begin <end!!!
+            orbitalsA_begin=int(NumeroOrbital1[0])
+            orbitalsA_end=int(NumeroOrbital1[1])
+        if (i==1):
+            NumeroOrbital2=line.strip('NumeroOrbital2=')
+            NumeroOrbital2=NumeroOrbital2.split()
+            orbitalsB_begin=int(NumeroOrbital2[0])
+            orbitalsB_end=int(NumeroOrbital2[1])
+        if (i==2):     # can be simplifed by looking at long file
+            FilenBasisFunctsA = line.strip()
+            nBasisFunctsA=findnBasisFuncts(FilenBasisFunctsA)
+        if (i==3):
+            FilenBasisFunctsB = line.strip()
+            nBasisFunctsB=findnBasisFuncts(FilenBasisFunctsB)
+    fPar.close()
+
+    # calculate no. of elements in overlap/Fock matrix
+    nA = nBasisFunctsA
+    nB = nBasisFunctsB
+    nAB = nA + nB
+    nMatrixElems = int(((nAB)*(nAB) + nAB)/2)
+    print("No. of elements in overlap/Fock matrix =", nMatrixElems)
+
+    fockNumel = []
+    lineCount = 0
+    # read Fock matrix file
+    for line in fFock:
+        lineCount += 1
+        if (lineCount > 3):
+            cols = line.split()
+            nCols = len(cols)
+            for i in range(nCols):
+                fockNumel.append(float(cols[i]))
+    fFock.close()
+
+    k = -1
+    # form Fock matrix by filling the bottom-diagonal elements first
+    F = np.zeros([nAB,nAB]) 
+    for i in range(nAB):
+        for j in range(i+1):
+            k = k + 1
+            F[i,j] = fockNumel[k]
+
+    # form the top-diagonal elements by symmetry
+    for i in range(nAB):
+        for j in range(i+1,nAB):
+            F[i,j] = F[j,i]
+
+    overlapNumel = []
+    lineCount = 0
+    # read overlap matrix file
+    for line in fOverlap:
+        lineCount += 1
+        if (lineCount > 3):
+            cols = line.split()
+            nCols = len(cols)
+            for i in range(nCols):
+                overlapNumel.append(float(cols[i]))
+    fOverlap.close()
+
+    k = -1
+    # form overlap matrix by filling the bottom-diagonal elements first
+    O = np.zeros([nAB,nAB]) 
+    for i in range(nAB):
+        for j in range(i+1):
+            k = k + 1
+            O[i,j] = overlapNumel[k]
+
+    # form the top-diagonal elements by symmetry
+    for i in range(nAB):
+        for j in range(i+1,nAB):
+            O[i,j] = O[j,i]
+
+
+    lenOfCoeff = 15  #?? danger
+    nCoeffsPerLine = 5   #??? danger
+    
+    orbCount = 0
+    orbFlag = 0
+    nOrbLines = nBasisFunctsA/nCoeffsPerLine + 1
+    orbCoeffsA = {}
+    # read file containing MOs of fragment A
+    line = fOrb.readline()    # read and ignore first line of file
+    while 1:
+        line = fOrb.readline()
+        if not line: break
+
+        if (orbFlag > 0):
+            for i in range(nCoeffsPerLine):
+                coeff = line[lenOfCoeff*i:lenOfCoeff*(i+1)]
+                if (coeff != "") and (coeff != "\n"):
+                    if not line.__contains__('Alpha'):
+                        base = float(coeff.split('D')[0])
+                        power = int(coeff.split('D')[1])
+                        coeff = "%fe%d" % (base,power)
+                        orbCoeffsA[orbCount].append(float(coeff))
+            orbFlag += 1
+            if (orbFlag == nOrbLines+1):
+                orbFlag = 0
+
+        cols = line.split()
+        if (len(cols) > 1):
+            if (cols[1] == 'Alpha'):
+                orbCoeffsA[int(cols[0])] = []
+                orbCount += 1
+                orbFlag = 1
+                
+                
+    # open file containing molecular orbitals of fragment B
+    molOrbFileB=os.getcwd()+'\\'+molOrbFileB
+    fOrb = open(molOrbFileB,'r')
+    
+    orbCount = 0
+    orbFlag = 0
+    nOrbLines = nBasisFunctsB/nCoeffsPerLine + 1
+    orbCoeffsB = {}
+    # read file containing MOs of fragment B
+    line = fOrb.readline()    # read and ignore first line of file
+    while 1:
+        line = fOrb.readline()
+        if not line: break
+
+        if (orbFlag > 0):
+            for i in range(nCoeffsPerLine):
+                coeff = line[lenOfCoeff*i:lenOfCoeff*(i+1)]
+                if (coeff != "") and (coeff != "\n"):
+                    if not line.__contains__('Alpha'):
+                        base = float(coeff.split('D')[0])
+                        power = int(coeff.split('D')[1])
+                        coeff = "%fe%d" % (base,power)
+                        orbCoeffsB[orbCount].append(float(coeff))
+            orbFlag += 1
+            if (orbFlag == nOrbLines+1):
+                orbFlag = 0
+
+        cols = line.split()
+        if (len(cols) > 1):
+            if (cols[1] == 'Alpha'):
+                orbCoeffsB[int(cols[0])] = []
+                orbCount += 1
+                orbFlag = 1
+                
+    # Compute coupling between orbital orbA on fragment A and orbital orbB
+    # on fragment B for orbA in {m,...,n} and orbB in {p,...,q} as defined
+    # in the parameter file
+
+    HARTREE2EV = 27.2114
+    
+    
+    with open(outFile, 'w') as fOut:
+        with open(outFile2,'w') as fOut2:
+            for orbA in range(orbitalsA_begin,orbitalsA_end+1):
+                for orbB in range(orbitalsB_begin,orbitalsB_end+1):
+        
+                    Saa = 0.0
+                    Eaa = 0.0
+                    for i in range(nBasisFunctsA):
+                        for j in range(nBasisFunctsA):
+                            Saa += orbCoeffsA[orbA][i]*O[i,j]*orbCoeffsA[orbA][j]
+                            Eaa += orbCoeffsA[orbA][i]*F[i,j]*orbCoeffsA[orbA][j]
+                    Eaaev = Eaa*HARTREE2EV
+        
+                    Sbb = 0.0
+                    Ebb = 0.0
+                    for i in range(nBasisFunctsB):
+                        for j in range(nBasisFunctsB):
+                            p = i + nBasisFunctsA
+                            q = j + nBasisFunctsA
+        #                    print(i, orbB, orbitalsB_end)
+        #                    print(i, orbCoeffsB[orbB][i])
+                            Sbb += orbCoeffsB[orbB][i]*O[p,q]*orbCoeffsB[orbB][j]
+                            Ebb += orbCoeffsB[orbB][i]*F[p,q]*orbCoeffsB[orbB][j]
+                    Ebbev = Ebb*HARTREE2EV
+        
+                    Sab = 0.0
+                    Eab = 0.0
+                    for i in range(nBasisFunctsA):
+                        for j in range(nBasisFunctsB):
+                            p = j + nBasisFunctsA
+                            Sab += orbCoeffsA[orbA][i]*O[p,i]*orbCoeffsB[orbB][j]
+                            Eab += orbCoeffsA[orbA][i]*F[p,i]*orbCoeffsB[orbB][j]
+                    Eabev = Eab*HARTREE2EV
+        
+                    tABev = (Eabev - ((Eaaev+Ebbev)*Sab/2))/(1-Sab*Sab)
+                    print("  ****************************************", file=fOut)
+                    print('\n') 
+                    print("Interaction btw MO", orbA,"on fragment A and MO", orbB, "on fragment B", file=fOut)
+                    print('\n') 
+                    print("S(A,A) =",Saa, "E(A,A) =",Eaa,"au","(",Eaaev,"eV)", file=fOut)
+                    print("S(B,B) =",Sbb,  "E(B,B) =", Ebb, "au","(",Ebbev, "eV)", file=fOut)
+                    print('\n')
+                    print("S(A,B) =",Sab, "E(A,B) =",Eab,"au","(",Eabev,"eV)", file=fOut)
+                    print('\n')
+                    print("t(",orbA,",",orbB,")=",tABev,"eV", file=fOut)
+                    print('\n')
+                    print('\n')
+                    print("t(",orbA,",",orbB,")=",tABev,"eV", file=fOut2)
+    fOut.close()
+    fOut2.close()
+
+
+                
+coupling(['a','data.in','logfile.txt','d']) # 'dimensionOM-n1n2plusieursOM.in' filename
+
+# Python Code for Computing Electronic Coupling Between Molecular Orbitals
+
+The Python code computes the electronic coupling between molecular orbitals (MOs) of two molecular fragments, referred to as fragment A and fragment B, using quantum chemistry data such as the Fock matrix, overlap matrix, and MO coefficients. This guide provides step-by-step instructions for running the code with detailed explanations of the workflow and input/output requirements.
+
+---
+
+## Purpose
+
+The code calculates the following:
+
+1. **Self-overlap ($S$)**:  
+   Overlap integrals for molecular orbitals within fragments.
+
+2. **Self-energy ($E$)**:  
+   Energies of the molecular orbitals on each fragment.
+
+3. **Cross-overlap ($S(A,B)$)**:  
+   Overlap integral between molecular orbitals of the two fragments.
+
+4. **Electronic Coupling ($t_{AB}$)**:  
+   Quantum mechanical interaction between MOs of fragment A and fragment B.
+
+# Input Files and Parameters
+
+## 1. InFile: Input File Descriptions
+The `InFile` specifies the file paths for:
+- **Fock Matrix (`fockFile`)**: Contains electronic interaction information.
+- **Overlap Matrix (`overlapFile`)**: Measures the spatial overlap of molecular orbitals.
+- **Molecular Orbital Coefficients (`molOrbFileA`, `molOrbFileB`)**: For fragments A and B.
+
+---
+
+## 2. paramFile: Parameters for the Calculation
+The `paramFile` specifies:
+- **Number of basis functions**:
+  - `nBasisFunctsA`: For fragment A.
+  - `nBasisFunctsB`: For fragment B.
+- **Molecular orbital ranges**:
+  - `orbitalsA_begin` to `orbitalsA_end` (for fragment A).
+  - `orbitalsB_begin` to `orbitalsB_end` (for fragment B).
+
+---
+
+## 3. outFilePrefix: Output File Prefix
+Two output files are generated:
+1. **Detailed Results (`filename.out`)**: Includes overlaps, energies, and coupling information.
+2. **Summary (`filename.t`)**: Contains only the coupling values.
+
+---
+
+# Workflow
+
+## 1. Helper Function: `findnBasisFuncts`
+Reads the basis set information (`nBasisFunctsA`, `nBasisFunctsB`) from a file:
+- Locates the line containing `NBasis=`.
+- Extracts and returns the integer value of the number of basis functions.
+
+---
+
+## 2. Main Function: `coupling(argv)`
+
+### **Step 1: File Handling**
+- Resolves paths for the `InFile`, `paramFile`, and output files.
+- Reads the input files and loads the Fock, overlap, and orbital coefficient files.
+
+### **Step 2: Reading the InFile**
+Reads file names for:
+- Fock matrix (`fockFile`).
+- Overlap matrix (`overlapFile`).
+- Molecular orbital coefficients for fragments A (`molOrbFileA`) and B (`molOrbFileB`).
+
+### **Step 3: Reading the paramFile**
+Extracts:
+- Orbital ranges:
+  - `orbitalsA_begin` to `orbitalsA_end` (for fragment A).
+  - `orbitalsB_begin` to `orbitalsB_end` (for fragment B).
+- Number of basis functions for A (`nBasisFunctsA`) and B (`nBasisFunctsB`) using `findnBasisFuncts`.
+
+### **Step 4: Reading Matrices**
+- **Fock Matrix (`F`)** and **Overlap Matrix (`O`)**:
+  - Both are stored in a lower triangular format in their respective files.
+  - The code reconstructs the full symmetric matrices $F$ and $O$ from these values.
+
+### **Step 5: Reading Molecular Orbitals**
+- Molecular orbital coefficients for fragments A and B are read from their respective files.
+- Coefficients are processed to handle scientific notation in the form `D` (common in quantum chemistry outputs).
+
+---
+
+## Step 6: Coupling Calculation
+
+For each pair of molecular orbitals $(\text{orbA}, \text{orbB})$:
+
+1. **Self-overlap**:
+   $$
+   S(X, X) = \sum_{i, j} C_X[i] \cdot O[i, j] \cdot C_X[j]
+   $$
+
+2. **Self-energy**:
+   $$
+   E(X, X) = \sum_{i, j} C_X[i] \cdot F[i, j] \cdot C_X[j]
+   $$
+   - Converted from Hartree to eV using:
+     $$
+     1 \, \text{Hartree} = 27.2114 \, \text{eV}
+     $$
+
+3. **Cross-term**:
+   - **Overlap**:
+     $$
+     S(A, B) = \sum_{i, j} C_A[i] \cdot O[p, q] \cdot C_B[j]
+     $$
+   - **Interaction**:
+     $$
+     E(A, B) = \sum_{i, j} C_A[i] \cdot F[p, q] \cdot C_B[j]
+     $$
+   - Index $p, q$ accounts for offsets due to the basis functions of A.
+
+4. **Electronic Coupling**:
+   $$
+   t_{AB} = \frac{E(A, B) - \frac{1}{2} \big(E(A, A) + E(B, B)\big) S(A, B)}{1 - S(A, B)^2}
+   $$
+
+---
+
+### **Step 7: Writing Results**
+Outputs:
+1. **Detailed Results**: Overlap and energy terms for each orbital pair $(\text{orbA}, \text{orbB})$ in `filename.out`.
+2. **Coupling Value**: $t_{AB}$ in `filename.t`.
+
+---
+
+# Key Equations
+
+### **1. Self-energy ($E(X, X)$)**:
+$$
+E(X, X) = \sum_{i, j} C_X[i] \cdot F[i, j] \cdot C_X[j]
+$$
+
+### **2. Overlap Integral ($S(X, X)$)**:
+$$
+S(X, X) = \sum_{i, j} C_X[i] \cdot O[i, j] \cdot C_X[j]
+$$
+
+### **3. Electronic Coupling ($t_{AB}$)**:
+$$
+t_{AB} = \frac{E(A, B) - \frac{1}{2} \big(E(A, A) + E(B, B)\big) S(A, B)}{1 - S(A, B)^2}
+$$
 
 ## Conclusion
 
 Electronic coupling is a vital parameter for understanding and optimizing molecular interactions in applications ranging from photovoltaics to molecular electronics. By leveraging Fock and overlap matrices, quantum chemistry tools enable precise calculation of $V$, guiding the design of advanced materials and devices.
 
+```
 
