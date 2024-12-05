@@ -629,7 +629,47 @@ paramFile looks like:
  NumeroOrbital1=	16 19
  NumeroOrbital2=	9 10
 ```
+there are 2 flourines at 3-21G there are 9 basis function with 2 flourines you have 18.
+# Basis Functions in 3-21G for Fluorine (F)
 
+## Calculation of Total Basis Functions
+
+### 1. **Core Orbitals**
+- The core orbitals for fluorine include the **1s orbital**:
+  - **1s orbital**: Represented by 1 contracted function.
+- **Total core functions**:
+  $$
+  1
+  $$
+
+---
+
+### 2. **Valence Orbitals**
+- The valence shell for fluorine consists of the **2s** and **2p** orbitals:
+  - **2s orbital**: Split into 2 functions (1 inner + 1 outer).
+  - **2p orbitals**: Each $p$ orbital ($p_x$, $p_y$, $p_z$) is split into 2 functions (1 inner + 1 outer).
+
+- **Total valence functions**:
+  $$
+  2 + 3 \times 2 = 8
+  $$
+
+---
+
+### 3. **Total Basis Functions**
+- **Core functions**:
+  $$
+  1
+  $$
+  
+- **Valence functions**:
+  $$
+  8
+  $$
+- **Total basis functions for F (3-21G)**:
+  $$
+  1 + 8 = 9
+  $$
 
 ---
 
