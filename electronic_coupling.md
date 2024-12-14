@@ -374,21 +374,23 @@ def coupling(argv):  # Take a list of arguement such as coupling(['a',2,3.5,'d']
     # read parameter file
     for i, line in enumerate(fPar):
         if (i==0):
-            NumeroOrbital1=line.strip('NumeroOrbital1=')
+            print(line)
+            NumeroOrbital1=line.split('=')[1]
             NumeroOrbital1=NumeroOrbital1.split()   # assume two numbers begin <end!!!
             orbitalsA_begin=int(NumeroOrbital1[0])
             orbitalsA_end=int(NumeroOrbital1[1])
+            print(orbitalsA_end)
         if (i==1):
-            NumeroOrbital2=line.strip('NumeroOrbital2=')
+            NumeroOrbital2=line.split('=')[1]
             NumeroOrbital2=NumeroOrbital2.split()
             orbitalsB_begin=int(NumeroOrbital2[0])
             orbitalsB_end=int(NumeroOrbital2[1])
         if (i==2):     # can be simplifed by looking at long file
-            FilenBasisFunctsA = line.strip()
-            nBasisFunctsA=findnBasisFuncts(FilenBasisFunctsA)
+            FilenBasisFunctsA = line.split('=')[1]
+            nBasisFunctsA=int(FilenBasisFunctsA)
         if (i==3):
-            FilenBasisFunctsB = line.strip()
-            nBasisFunctsB=findnBasisFuncts(FilenBasisFunctsB)
+            FilenBasisFunctsB = line.split('=')[1]
+            nBasisFunctsB=int(FilenBasisFunctsB)
     fPar.close()
 
     # calculate no. of elements in overlap/Fock matrix
@@ -577,7 +579,8 @@ def coupling(argv):  # Take a list of arguement such as coupling(['a',2,3.5,'d']
 
 
                 
-coupling(['a','data.in','logfile.txt','d']) # 'dimensionOM-n1n2plusieursOM.in' filename
+coupling(['a','inFile.in','paramFile.txt','output']) # 'dimensionOM-n1n2plusieursOM.in' filename
+# coupling(['a','data.in','dimensionOM-n1n2plusieursOM.in','test']) 
 ```
 
 # Python Code for Computing Electronic Coupling Between Molecular Orbitals
