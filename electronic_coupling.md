@@ -797,4 +797,11 @@ $$
 Electronic coupling is a vital parameter for understanding and optimizing molecular interactions in applications ranging from photovoltaics to molecular electronics. By leveraging Fock and overlap matrices, quantum chemistry tools enable precise calculation of $V$, guiding the design of advanced materials and devices.
 
 ```
+![image](https://github.com/user-attachments/assets/081cd0b7-09f1-436a-b6e0-6e64caf79015)
+
+for hole transport
+
+get the energy from the neutral state and get the energy of an electron removed. the difference will be lamda 1
+optimized the hole state and get the energy and then remove the hole and get the energy. the difference is lamda 2
+the total will be lamda1 and lamda 2
 
