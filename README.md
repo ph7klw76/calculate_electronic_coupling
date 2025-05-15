@@ -1,6 +1,6 @@
 # Note of Flow of calcuation
 
-After MD is completed. You neeed to remove booundaries of your final production run using command
+### 1. After MD is completed. You neeed to remove booundaries of your final production run using command
 
 ```bash
 echo -e "0\nq" | gmx_mpi trjconv -f npt.gro -s npt.tpr -pbc mol -o output_whole.gro
@@ -8,8 +8,9 @@ sleep 10
 echo 0 | gmx_mpi trjconv -f npt.trr -s npt.tpr -pbc mol -sep -o frame.gro
 ```
 where npt.gro is your final result and you have at least 100 tracked structure in the .trr file
+Put all you frame files into anuther folder called frame for better storage.
 
-run extractdistancebetween2molecules.py. Before running that file, you need to change the atom you need to used such as
+### 2. copy extractdistancebetween2molecules.py in the same folder of the data. Before running that file, you need to change the atom you need to used such as
 
 
 ```python
@@ -23,17 +24,11 @@ the atom_filters define the plane or structure you want to investigate.
 
 If it is a plane, then the normal between two plane is obtained . 
 
-# Plane Normal Calculation via PCA
-
 In that snippet you’re feeding an $N \times 3$ array `xyz` of Cartesian coordinates (one row per atom).  
 The helper functions do two things:
 
-## Step-by-step Explanation
 
-| Step               | Math                                                                                   | Meaning                                                           |
-|--------------------|----------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| `centroid(xyz)`    | $$ \mathbf{r}_{\text{cm}} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{r}_i $$                 | Geometric centre of the selected atoms                            |
-| `plane_normal(xyz)`| 1. Centre the coordinates: $$ \tilde{\mathbf{r}}_i = \mathbf{r}_i - \mathbf{r}_{\text{cm}} $$ <br> 2. Build the $3 \times 3$ covariance matrix: $$ C = \tilde{R}^\top \tilde{R} $$ <br> 3. Diagonalise $C$: $$ C \mathbf{v}_k = \lambda_k \mathbf{v}_k $$ <br> 4. Choose the eigen‑vector $\mathbf{v}_{\min}$ with the smallest eigen‑value | Principal-component analysis (PCA) of the point cloud |
+![image](https://github.com/user-attachments/assets/155063c7-296d-4f0e-a704-deefa2f35334)
 
 Because the smallest eigen‑value corresponds to the axis with the **least variance**,  
 its eigen‑vector $\mathbf{v}_{\min}$ is orthogonal to the best‑fit plane that minimizes  
@@ -59,3 +54,34 @@ Cluster similar orientations (used later in your k-means step)
 In short:
 “Plane normal” here is just a direction vector $\hat{n}$ at right angles to the molecular plane defined by the filtered atoms,
 obtained through a PCA-style least-squares fit.
+
+### 3. run the ./extract_pairs2.sh output_whole.gro index.ndx nearest_molecule_distances.txt 0.40 0.40 0062100000
+
+the nearest_molecule_distances.txt is the file you obatined from extractdistancebetween2molecules.py and 0.4 is the target distance followed by tolerance and the last value is the tuned omega value using wb97x functional for the molecule following gaussian 09 convention 
+This will create all the caussian file.
+
+### 4. Check the molecular pair structure by running checkpair.py. this will check any outlinier results which because of matching boundary results in being far away of each other.
+
+this can be done by
+
+ ```python
+        if coords.shape[0] < 176: # change this , to be total number of atoms
+            print(f"Skipping {os.path.basename(xyz)}: only {coords.shape[0]} atoms")
+            continue
+
+        first_88 = coords[:88]  # change this to be the number of atoms of first pair
+        last_88  = coords[-88:] # change this to be the number of atoms of second pair
+```
+
+### 5. then run the delete.sh file
+   
+### 6. To submit for calculation in that folder run submit.sh note there will be a lot of files.you might want to break them into a few folder
+
+### 7. In the frame folder you can run distributionplot.py. susing the same modified atom_filter in step 2. This will create a 2-D contour plot such as
+
+   ![image](https://github.com/user-attachments/assets/8d4fdd7a-3335-4c20-b0cf-19d0ddcb0b34)
+
+
+
+
+
