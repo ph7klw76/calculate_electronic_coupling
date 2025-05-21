@@ -624,8 +624,8 @@ paramFile looks like:
 ``` plaintext
  BasisFunctions1=	26   
  BasisFunctions2=	18   
- NumeroOrbital1=	16 19
- NumeroOrbital2=	9 10
+ orbitalsA=	16 19
+ orbitalsB=	9 10
 ```
 there are 2 flourines at 3-21G there are 9 basis function with 2 flourines you have 18.
 # Basis Functions in 3-21G for Fluorine (F)
