@@ -93,10 +93,10 @@ molOrbB    filename
 paramFile: Specifies calculation parameters, such as the number of basis functions and orbital ranges.
 
 ```plaintext
-nBasisFunctsA    number
-nBasisFunctsB    number
-orbitalsA        number number
-orbitalsB        number number
+orbitalsA    number
+orbitalsB    number
+nBasisFunctsA    number number
+nBasisFunctsB    number number
 ```
 ## OutFilePrefix
 
@@ -622,10 +622,10 @@ The `paramFile` specifies:
 paramFile looks like:
 
 ``` plaintext
- BasisFunctions1=	26   
- BasisFunctions2=	18   
- orbitalsA=	16 19
- orbitalsB=	9 10
+ orbitalsA =	26   
+ orbitalsB =	18   
+ nBasisFunctsA=	16 19
+ nBasisFunctsB=	9 10
 ```
 there are 2 flourines at 3-21G there are 9 basis function with 2 flourines you have 18.
 # Basis Functions in 3-21G for Fluorine (F)
