@@ -82,6 +82,11 @@ this can be done by
    ![image](https://github.com/user-attachments/assets/8d4fdd7a-3335-4c20-b0cf-19d0ddcb0b34)
    
 ### 8. copy the run.py and  ECOUPLING.py in the same folder make sure the list of distance is also the same folder and ensure correct name of the distance filename and  add paramFile.txt file [see here]([electronic_coupling.md) to learn what is paramFile.txt.
+you might want to use fats_coupling.oy as a module library where you can take the best of computational power by setting
+set MKL_NUM_THREADS=8
+set OMP_NUM_THREADS=8
+
+within your environment
 
 
 
