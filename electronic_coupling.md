@@ -298,6 +298,13 @@ $NBO SAO=w53 FAO=W54 $END
   - `w54`: Contains FAO-related data.
 
 ```python
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Dec 14 20:41:49 2024
+
+@author: User
+"""
+
 import os
 import numpy as np
 
