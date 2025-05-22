@@ -80,6 +80,8 @@ this can be done by
 ### 7. In the frame folder you can run distributionplot.py. susing the same modified atom_filter in step 2. This will create a 2-D contour plot such as
 
    ![image](https://github.com/user-attachments/assets/8d4fdd7a-3335-4c20-b0cf-19d0ddcb0b34)
+   
+### 8. copy the run.py and  ECOUPLING.py in the same folder make sure the list of distance is also the same folder and ensure correct name of the distance filename and then run.
 
 
 
