@@ -88,6 +88,9 @@ set OMP_NUM_THREADS=8
 
 within your environment
 
+### 9. Extract the e-coupling values from your directory
+by running extracte-coupling.py. Note you need which coupling you need to extract and have the distance ready obtained from extractdistancebetween2molecules.py
+
 
 
 
